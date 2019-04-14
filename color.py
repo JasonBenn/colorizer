@@ -49,7 +49,6 @@ def my_generator(batch_size, img_dir):
         counter += batch_size
 
 
-
 model = Sequential()
 model.add(Reshape((config.height,config.width,1), input_shape=(config.height,config.width)))
 model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
@@ -58,21 +57,20 @@ model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
 model.add(UpSampling2D((2, 2)))
 model.add(Conv2D(3, (3, 3), activation='relu', padding='same'))
 
+
 def perceptual_distance(y_true, y_pred):
-    rmean = ( y_true[:,:,:,0] + y_pred[:,:,:,0] ) / 2;
+    rmean = ( y_true[:,:,:,0] + y_pred[:,:,:,0] ) / 2
     r = y_true[:,:,:,0] - y_pred[:,:,:,0]
     g = y_true[:,:,:,1] - y_pred[:,:,:,1]
     b = y_true[:,:,:,2] - y_pred[:,:,:,2]
     
-    return K.mean(K.sqrt((((512+rmean)*r*r)/256) + 4*g*g + (((767-rmean)*b*b)/256)));
+    return K.mean(K.sqrt((((512+rmean)*r*r)/256) + 4*g*g + (((767-rmean)*b*b)/256)))
 
 model.compile(optimizer='adam', loss='mse', metrics=[perceptual_distance])
 
 (val_bw_images, val_color_images) = next(my_generator(145, val_dir))
 
-model.fit_generator( my_generator(config.batch_size, train_dir),
+model.fit_generator(my_generator(config.batch_size, train_dir),
                      steps_per_epoch=2,
                      epochs=config.num_epochs, callbacks=[WandbCallback(data_type='image', predictions=16)],
                      validation_data=(val_bw_images, val_color_images))
-
-
